@@ -1,5 +1,6 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=2 format=3 uid="uid://c518k58t3nbqk"]
 
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_player"]
 [sub_resource type="Environment" id="Environment_sanctuary"]
 background_mode = 1
 background_color = Color(0.025, 0.035, 0.065, 1)
@@ -14,15 +15,17 @@ fog_density = 0.001
 [sub_resource type="BoxMesh" id="BoxMesh_floor"]
 size = Vector3(24, 0.5, 24)
 
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.13, 0.16, 0.2, 1)
+
 [sub_resource type="BoxShape3D" id="BoxShape_floor"]
 size = Vector3(24, 0.5, 24)
 
-[sub_resource type="StandardMaterial3D" id="Material_floor"]
-albedo_color = Color(0.13, 0.16, 0.2, 1)
-roughness = 1.0
-
 [sub_resource type="BoxMesh" id="BoxMesh_wall"]
 size = Vector3(24, 3, 0.6)
+
+[sub_resource type="StandardMaterial3D" id="Material_wall"]
+albedo_color = Color(0.085, 0.105, 0.15, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape_wall"]
 size = Vector3(24, 3, 0.6)
@@ -33,75 +36,68 @@ size = Vector3(0.6, 3, 24)
 [sub_resource type="BoxShape3D" id="BoxShape_side_wall"]
 size = Vector3(0.6, 3, 24)
 
-[sub_resource type="StandardMaterial3D" id="Material_wall"]
-albedo_color = Color(0.085, 0.105, 0.15, 1)
-roughness = 1.0
+[node name="Main" type="Node3D" unique_id=1003365631]
 
-[node name="Main" type="Node3D"]
-
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1442600844]
 environment = SubResource("Environment_sanctuary")
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-52, -28, 0)
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=400378133]
+transform = Transform3D(0.88294756, 0.36994863, -0.2890356, 0, 0.6156615, 0.7880107, 0.46947157, -0.6957722, 0.5435968, 0, 0, 0)
 light_color = Color(0.72, 0.79, 1, 1)
 light_energy = 2.0
 shadow_enabled = true
 
-[node name="Camera3D" type="Camera3D" parent="."]
-position = Vector3(0, 30, 8)
-rotation_degrees = Vector3(-75, 0, 0)
-fov = 70.0
-current = true
+[node name="Player" parent="." unique_id=1364550572 instance=ExtResource("1_player")]
+position = Vector3(0, 0, 0)
 
-[node name="Arena" type="Node3D" parent="."]
+[node name="Arena" type="Node3D" parent="." unique_id=1626148029]
 
-[node name="Ground" type="StaticBody3D" parent="Arena"]
-position = Vector3(0, -0.25, 0)
+[node name="Ground" type="StaticBody3D" parent="Arena" unique_id=1453309595]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/Ground"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/Ground" unique_id=1702526661]
 mesh = SubResource("BoxMesh_floor")
 surface_material_override/0 = SubResource("Material_floor")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/Ground"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/Ground" unique_id=261315139]
 shape = SubResource("BoxShape_floor")
 
-[node name="NorthBoundary" type="StaticBody3D" parent="Arena"]
-position = Vector3(0, 1.5, -12)
+[node name="NorthBoundary" type="StaticBody3D" parent="Arena" unique_id=931142409]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -12)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/NorthBoundary"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/NorthBoundary" unique_id=190396789]
 mesh = SubResource("BoxMesh_wall")
 surface_material_override/0 = SubResource("Material_wall")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/NorthBoundary"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/NorthBoundary" unique_id=1418959983]
 shape = SubResource("BoxShape_wall")
 
-[node name="SouthBoundary" type="StaticBody3D" parent="Arena"]
-position = Vector3(0, 1.5, 12)
+[node name="SouthBoundary" type="StaticBody3D" parent="Arena" unique_id=612745436]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 12)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/SouthBoundary"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/SouthBoundary" unique_id=1995570614]
 mesh = SubResource("BoxMesh_wall")
 surface_material_override/0 = SubResource("Material_wall")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/SouthBoundary"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/SouthBoundary" unique_id=1544064830]
 shape = SubResource("BoxShape_wall")
 
-[node name="WestBoundary" type="StaticBody3D" parent="Arena"]
-position = Vector3(-12, 1.5, 0)
+[node name="WestBoundary" type="StaticBody3D" parent="Arena" unique_id=631378612]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.5, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/WestBoundary"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/WestBoundary" unique_id=365149247]
 mesh = SubResource("BoxMesh_side_wall")
 surface_material_override/0 = SubResource("Material_wall")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/WestBoundary"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/WestBoundary" unique_id=1623618110]
 shape = SubResource("BoxShape_side_wall")
 
-[node name="EastBoundary" type="StaticBody3D" parent="Arena"]
-position = Vector3(12, 1.5, 0)
+[node name="EastBoundary" type="StaticBody3D" parent="Arena" unique_id=2084171049]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1.5, 0)
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/EastBoundary"]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/EastBoundary" unique_id=609936923]
 mesh = SubResource("BoxMesh_side_wall")
 surface_material_override/0 = SubResource("Material_wall")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/EastBoundary"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/EastBoundary" unique_id=736152822]
 shape = SubResource("BoxShape_side_wall")
