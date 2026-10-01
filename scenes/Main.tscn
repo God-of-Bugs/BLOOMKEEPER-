@@ -1,0 +1,107 @@
+[gd_scene load_steps=11 format=3]
+
+[sub_resource type="Environment" id="Environment_sanctuary"]
+background_mode = 1
+background_color = Color(0.025, 0.035, 0.065, 1)
+ambient_light_source = 3
+ambient_light_color = Color(0.29, 0.34, 0.48, 1)
+ambient_light_energy = 1.2
+reflected_light_source = 2
+fog_enabled = true
+fog_light_color = Color(0.07, 0.1, 0.17, 1)
+fog_density = 0.001
+
+[sub_resource type="BoxMesh" id="BoxMesh_floor"]
+size = Vector3(24, 0.5, 24)
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(24, 0.5, 24)
+
+[sub_resource type="StandardMaterial3D" id="Material_floor"]
+albedo_color = Color(0.13, 0.16, 0.2, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall"]
+size = Vector3(24, 3, 0.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall"]
+size = Vector3(24, 3, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_side_wall"]
+size = Vector3(0.6, 3, 24)
+
+[sub_resource type="BoxShape3D" id="BoxShape_side_wall"]
+size = Vector3(0.6, 3, 24)
+
+[sub_resource type="StandardMaterial3D" id="Material_wall"]
+albedo_color = Color(0.085, 0.105, 0.15, 1)
+roughness = 1.0
+
+[node name="Main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_sanctuary")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-52, -28, 0)
+light_color = Color(0.72, 0.79, 1, 1)
+light_energy = 2.0
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 30, 8)
+rotation_degrees = Vector3(-75, 0, 0)
+fov = 70.0
+current = true
+
+[node name="Arena" type="Node3D" parent="."]
+
+[node name="Ground" type="StaticBody3D" parent="Arena"]
+position = Vector3(0, -0.25, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/Ground"]
+mesh = SubResource("BoxMesh_floor")
+surface_material_override/0 = SubResource("Material_floor")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/Ground"]
+shape = SubResource("BoxShape_floor")
+
+[node name="NorthBoundary" type="StaticBody3D" parent="Arena"]
+position = Vector3(0, 1.5, -12)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/NorthBoundary"]
+mesh = SubResource("BoxMesh_wall")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/NorthBoundary"]
+shape = SubResource("BoxShape_wall")
+
+[node name="SouthBoundary" type="StaticBody3D" parent="Arena"]
+position = Vector3(0, 1.5, 12)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/SouthBoundary"]
+mesh = SubResource("BoxMesh_wall")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/SouthBoundary"]
+shape = SubResource("BoxShape_wall")
+
+[node name="WestBoundary" type="StaticBody3D" parent="Arena"]
+position = Vector3(-12, 1.5, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/WestBoundary"]
+mesh = SubResource("BoxMesh_side_wall")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/WestBoundary"]
+shape = SubResource("BoxShape_side_wall")
+
+[node name="EastBoundary" type="StaticBody3D" parent="Arena"]
+position = Vector3(12, 1.5, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/EastBoundary"]
+mesh = SubResource("BoxMesh_side_wall")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/EastBoundary"]
+shape = SubResource("BoxShape_side_wall")
