@@ -1,0 +1,16 @@
+# Godot 4+ generated editor/import cache
+.godot/
+
+# Godot export artifacts
+/export.cfg
+/export_presets.cfg
+
+# Operating system and editor temporary files
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
