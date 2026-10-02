@@ -2,6 +2,7 @@ class_name BloomkeeperProwler
 extends CharacterBody3D
 
 signal pacified
+signal shrine_transformed(shrine_position: Vector3)
 
 enum State { AGGRESSIVE, CALMING, PACIFIED }
 
@@ -11,11 +12,14 @@ enum State { AGGRESSIVE, CALMING, PACIFIED }
 @export var stopping_distance: float = 1.05
 
 var target_player: Node3D = null
+var _shrine_light: OmniLight3D = null
 
 
 func _ready() -> void:
 	add_to_group("creatures")
 	add_to_group("prowlers")
+	if state == State.PACIFIED:
+		_update_visuals_pacified()
 
 
 func _physics_process(delta: float) -> void:
@@ -72,8 +76,12 @@ func pacify() -> void:
 		return
 	state = State.PACIFIED
 	velocity = Vector3.ZERO
+	remove_from_group("creatures")
+	add_to_group("shrines")
+	add_to_group("pacified_creatures")
 	_update_visuals_pacified()
 	pacified.emit()
+	shrine_transformed.emit(global_position)
 
 
 func _update_visuals_pacified() -> void:
@@ -94,3 +102,12 @@ func _update_visuals_pacified() -> void:
 		mat_crest.emission = Color(0.80, 0.90, 0.60, 1.0)
 		mat_crest.emission_energy_multiplier = 1.0
 		crest_mesh.material_override = mat_crest
+
+	if not _shrine_light:
+		_shrine_light = OmniLight3D.new()
+		_shrine_light.name = "ShrineLight"
+		_shrine_light.light_color = Color(0.92, 0.88, 0.55, 1.0)
+		_shrine_light.light_energy = 2.5
+		_shrine_light.omni_range = 6.0
+		_shrine_light.position = Vector3(0, 1.2, 0)
+		add_child(_shrine_light)
