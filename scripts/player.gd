@@ -3,6 +3,8 @@ extends CharacterBody3D
 
 signal bloom_pulse_emitted(origin: Vector3, radius: float)
 signal energy_changed(current: float, max_energy: float)
+signal health_changed(current_health: int, max_health: int)
+signal player_defeated
 
 const MOVE_SPEED: float = 5.0
 const TURN_SPEED: float = 10.0
@@ -24,6 +26,9 @@ const ENERGY_REGEN_RATE: float = 12.0
 const BASE_PULSE_COST: float = 20.0
 const MAX_PULSE_COST: float = 45.0
 
+const MAX_HEALTH: int = 3
+const INVULNERABILITY_DURATION: float = 1.5
+
 var _dash_timer: float = 0.0
 var _dash_cooldown_timer: float = 0.0
 var _dash_direction: Vector3 = Vector3.ZERO
@@ -33,6 +38,8 @@ var _pulse_charge_radius: float = PULSE_MIN_RADIUS
 var _pulse_cooldown_timer: float = 0.0
 
 var current_energy: float = MAX_ENERGY
+var current_health: int = MAX_HEALTH
+var _invulnerability_timer: float = 0.0
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var model: Node3D = $Model
@@ -49,6 +56,7 @@ func _ready() -> void:
 	_register_mouse_pulse_action("bloom_pulse", MOUSE_BUTTON_RIGHT)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	energy_changed.emit(current_energy, MAX_ENERGY)
+	health_changed.emit(current_health, MAX_HEALTH)
 
 
 func _register_move_action(action_name: String, physical_key: Key) -> void:
@@ -84,6 +92,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	_dash_cooldown_timer = maxf(_dash_cooldown_timer - delta, 0.0)
 	_pulse_cooldown_timer = maxf(_pulse_cooldown_timer - delta, 0.0)
+	_invulnerability_timer = maxf(_invulnerability_timer - delta, 0.0)
 
 	if current_energy < MAX_ENERGY:
 		current_energy = minf(current_energy + ENERGY_REGEN_RATE * delta, MAX_ENERGY)
@@ -165,3 +174,15 @@ func execute_bloom_pulse(radius: float) -> void:
 			creature.apply_bloom_pulse(pulse_origin, radius)
 
 	bloom_pulse_emitted.emit(pulse_origin, radius)
+
+
+func take_damage(amount: int = 1) -> void:
+	if _invulnerability_timer > 0.0 or current_health <= 0:
+		return
+
+	current_health = max(current_health - amount, 0)
+	_invulnerability_timer = INVULNERABILITY_DURATION
+	health_changed.emit(current_health, MAX_HEALTH)
+
+	if current_health <= 0:
+		player_defeated.emit()

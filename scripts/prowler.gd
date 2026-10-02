@@ -60,6 +60,12 @@ func _process_chase(delta: float) -> void:
 	else:
 		velocity.x = 0.0
 		velocity.z = 0.0
+		_attack_player()
+
+
+func _attack_player() -> void:
+	if is_instance_valid(target_player) and target_player.has_method("take_damage"):
+		target_player.take_damage(1)
 
 
 func apply_bloom_pulse(pulse_origin: Vector3, pulse_radius: float) -> void:
