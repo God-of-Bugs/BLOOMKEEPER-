@@ -2,6 +2,8 @@
 
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/Prowler.tscn" id="2_prowler"]
+[ext_resource type="Script" path="res://scripts/game_manager.gd" id="3_game_manager"]
+[ext_resource type="PackedScene" path="res://scenes/UI.tscn" id="4_ui"]
 
 [sub_resource type="Environment" id="Environment_sanctuary"]
 background_mode = 1
@@ -53,6 +55,11 @@ shadow_enabled = true
 
 [node name="Prowler" parent="." instance=ExtResource("2_prowler")]
 position = Vector3(3.5, 0, -1.5)
+
+[node name="GameManager" type="Node" parent="."]
+script = ExtResource("3_game_manager")
+
+[node name="UI" parent="." instance=ExtResource("4_ui")]
 
 [node name="Arena" type="Node3D" parent="." unique_id=1626148029]
 
