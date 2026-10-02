@@ -1,6 +1,8 @@
 class_name BloomkeeperProwler
 extends CharacterBody3D
 
+signal pacified
+
 enum State { AGGRESSIVE, CALMING, PACIFIED }
 
 @export var state: State = State.AGGRESSIVE
@@ -54,3 +56,41 @@ func _process_chase(delta: float) -> void:
 	else:
 		velocity.x = 0.0
 		velocity.z = 0.0
+
+
+func apply_bloom_pulse(pulse_origin: Vector3, pulse_radius: float) -> void:
+	if state == State.PACIFIED:
+		return
+
+	var dist: float = global_position.distance_to(pulse_origin)
+	if dist <= pulse_radius:
+		pacify()
+
+
+func pacify() -> void:
+	if state == State.PACIFIED:
+		return
+	state = State.PACIFIED
+	velocity = Vector3.ZERO
+	_update_visuals_pacified()
+	pacified.emit()
+
+
+func _update_visuals_pacified() -> void:
+	var body_mesh: MeshInstance3D = get_node_or_null("Body") as MeshInstance3D
+	if body_mesh:
+		var mat: StandardMaterial3D = StandardMaterial3D.new()
+		mat.albedo_color = Color(0.35, 0.82, 0.62, 1.0)
+		mat.emission_enabled = true
+		mat.emission = Color(0.25, 0.70, 0.45, 1.0)
+		mat.emission_energy_multiplier = 0.6
+		body_mesh.material_override = mat
+
+	var crest_mesh: MeshInstance3D = get_node_or_null("Crest") as MeshInstance3D
+	if crest_mesh:
+		var mat_crest: StandardMaterial3D = StandardMaterial3D.new()
+		mat_crest.albedo_color = Color(0.85, 0.95, 0.75, 1.0)
+		mat_crest.emission_enabled = true
+		mat_crest.emission = Color(0.80, 0.90, 0.60, 1.0)
+		mat_crest.emission_energy_multiplier = 1.0
+		crest_mesh.material_override = mat_crest
