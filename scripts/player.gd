@@ -2,6 +2,7 @@ class_name BloomkeeperPlayer
 extends CharacterBody3D
 
 signal bloom_pulse_emitted(origin: Vector3, radius: float)
+signal energy_changed(current: float, max_energy: float)
 
 const MOVE_SPEED: float = 5.0
 const TURN_SPEED: float = 10.0
@@ -18,6 +19,11 @@ const PULSE_MAX_RADIUS: float = 7.5
 const PULSE_CHARGE_RATE: float = 4.0
 const PULSE_COOLDOWN: float = 0.6
 
+const MAX_ENERGY: float = 100.0
+const ENERGY_REGEN_RATE: float = 12.0
+const BASE_PULSE_COST: float = 20.0
+const MAX_PULSE_COST: float = 45.0
+
 var _dash_timer: float = 0.0
 var _dash_cooldown_timer: float = 0.0
 var _dash_direction: Vector3 = Vector3.ZERO
@@ -25,6 +31,8 @@ var _dash_direction: Vector3 = Vector3.ZERO
 var _is_charging_pulse: bool = false
 var _pulse_charge_radius: float = PULSE_MIN_RADIUS
 var _pulse_cooldown_timer: float = 0.0
+
+var current_energy: float = MAX_ENERGY
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var model: Node3D = $Model
@@ -40,6 +48,7 @@ func _ready() -> void:
 	_register_move_action("bloom_pulse", KEY_E)
 	_register_mouse_pulse_action("bloom_pulse", MOUSE_BUTTON_RIGHT)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	energy_changed.emit(current_energy, MAX_ENERGY)
 
 
 func _register_move_action(action_name: String, physical_key: Key) -> void:
@@ -75,6 +84,10 @@ func _unhandled_input(event: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	_dash_cooldown_timer = maxf(_dash_cooldown_timer - delta, 0.0)
 	_pulse_cooldown_timer = maxf(_pulse_cooldown_timer - delta, 0.0)
+
+	if current_energy < MAX_ENERGY:
+		current_energy = minf(current_energy + ENERGY_REGEN_RATE * delta, MAX_ENERGY)
+		energy_changed.emit(current_energy, MAX_ENERGY)
 
 	_process_bloom_pulse(delta)
 
@@ -120,7 +133,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _process_bloom_pulse(delta: float) -> void:
-	if _pulse_cooldown_timer > 0.0:
+	if _pulse_cooldown_timer > 0.0 or current_energy < BASE_PULSE_COST:
 		return
 
 	if Input.is_action_just_pressed("bloom_pulse"):
@@ -131,9 +144,17 @@ func _process_bloom_pulse(delta: float) -> void:
 		_pulse_charge_radius = minf(_pulse_charge_radius + PULSE_CHARGE_RATE * delta, PULSE_MAX_RADIUS)
 
 	if _is_charging_pulse and Input.is_action_just_released("bloom_pulse"):
-		execute_bloom_pulse(_pulse_charge_radius)
+		var cost: float = lerpf(
+			BASE_PULSE_COST,
+			MAX_PULSE_COST,
+			(_pulse_charge_radius - PULSE_MIN_RADIUS) / (PULSE_MAX_RADIUS - PULSE_MIN_RADIUS)
+		)
+		if current_energy >= cost:
+			current_energy -= cost
+			energy_changed.emit(current_energy, MAX_ENERGY)
+			execute_bloom_pulse(_pulse_charge_radius)
+			_pulse_cooldown_timer = PULSE_COOLDOWN
 		_is_charging_pulse = false
-		_pulse_cooldown_timer = PULSE_COOLDOWN
 
 
 func execute_bloom_pulse(radius: float) -> void:
