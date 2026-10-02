@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://c518k58t3nbqk"]
+[gd_scene format=3 uid="uid://c518k58t3nbqk"]
 
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/Prowler.tscn" id="2_prowler"]
+
 [sub_resource type="Environment" id="Environment_sanctuary"]
 background_mode = 1
 background_color = Color(0.025, 0.035, 0.065, 1)
@@ -48,7 +50,9 @@ light_energy = 2.0
 shadow_enabled = true
 
 [node name="Player" parent="." unique_id=1364550572 instance=ExtResource("1_player")]
-position = Vector3(0, 0, 0)
+
+[node name="Prowler" parent="." instance=ExtResource("2_prowler")]
+position = Vector3(3.5, 0, -1.5)
 
 [node name="Arena" type="Node3D" parent="." unique_id=1626148029]
 

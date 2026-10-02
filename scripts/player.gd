@@ -86,7 +86,6 @@ func _physics_process(delta: float) -> void:
 		velocity.y = 0.0
 
 	move_and_slide()
-
 	if move_direction.length_squared() > 0.001:
 		var target_yaw: float = atan2(-move_direction.x, -move_direction.z)
 		model.rotation.y = lerp_angle(model.rotation.y, target_yaw, TURN_SPEED * delta)
