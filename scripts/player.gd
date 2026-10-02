@@ -19,6 +19,7 @@ var _dash_direction: Vector3 = Vector3.ZERO
 
 
 func _ready() -> void:
+	add_to_group("player")
 	_register_move_action("move_forward", KEY_W)
 	_register_move_action("move_back", KEY_S)
 	_register_move_action("move_left", KEY_A)
