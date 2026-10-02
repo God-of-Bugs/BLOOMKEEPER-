@@ -6,6 +6,13 @@ const TURN_SPEED: float = 10.0
 const MOUSE_SENSITIVITY: float = 0.003
 const MIN_CAMERA_PITCH: float = deg_to_rad(-65.0)
 const MAX_CAMERA_PITCH: float = deg_to_rad(15.0)
+const DASH_DISTANCE: float = 1.8
+const DASH_DURATION: float = 0.22
+const DASH_COOLDOWN: float = 1.2
+
+var _dash_timer: float = 0.0
+var _dash_cooldown_timer: float = 0.0
+var _dash_direction: Vector3 = Vector3.ZERO
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var model: Node3D = $Model
@@ -16,6 +23,7 @@ func _ready() -> void:
 	_register_move_action("move_back", KEY_S)
 	_register_move_action("move_left", KEY_A)
 	_register_move_action("move_right", KEY_D)
+	_register_move_action("dash", KEY_SHIFT)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -42,6 +50,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_dash_cooldown_timer = maxf(_dash_cooldown_timer - delta, 0.0)
 	var input_vector: Vector2 = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var camera_forward: Vector3 = -camera_pivot.global_basis.z
 	var camera_right: Vector3 = camera_pivot.global_basis.x
@@ -54,8 +63,23 @@ func _physics_process(delta: float) -> void:
 	if move_direction.length_squared() > 1.0:
 		move_direction = move_direction.normalized()
 
-	velocity.x = move_direction.x * MOVE_SPEED
-	velocity.z = move_direction.z * MOVE_SPEED
+	if Input.is_action_just_pressed("dash") and _dash_cooldown_timer <= 0.0:
+		_dash_direction = move_direction
+		if _dash_direction.length_squared() <= 0.001:
+			_dash_direction = -model.global_basis.z
+			_dash_direction.y = 0.0
+		_dash_direction = _dash_direction.normalized()
+		_dash_timer = DASH_DURATION
+		_dash_cooldown_timer = DASH_COOLDOWN
+
+	if _dash_timer > 0.0:
+		_dash_timer = maxf(_dash_timer - delta, 0.0)
+		velocity.x = _dash_direction.x * (DASH_DISTANCE / DASH_DURATION)
+		velocity.z = _dash_direction.z * (DASH_DISTANCE / DASH_DURATION)
+	else:
+		velocity.x = move_direction.x * MOVE_SPEED
+		velocity.z = move_direction.z * MOVE_SPEED
+
 	if not is_on_floor():
 		velocity.y -= get_gravity().length() * delta
 	else:
