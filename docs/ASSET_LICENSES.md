@@ -3,10 +3,10 @@
 ## Project Asset Inventory
 
 ### 1. 3D Models & Meshes
-- **Player Mesh**: Built-in procedural `CapsuleMesh` and `SphereMesh` (Godot Engine).
-- **Prowler Mesh**: Built-in procedural `CapsuleMesh` (Godot Engine).
-- **Arena & Boundaries**: Built-in procedural `BoxMesh` (Godot Engine).
-- **License**: MIT / Godot Engine Public Domain equivalent.
+- **Player Mesh**: Original procedural low-poly lantern-bearing adventurer composed from built-in `SphereMesh`, `CapsuleMesh`, and `CylinderMesh` primitives (Godot Engine).
+- **Prowler Mesh**: Original procedural wood-and-root creature composed from built-in `SphereMesh` and `CapsuleMesh` primitives (Godot Engine).
+- **Forest & Arena**: Original procedural `MultiMeshInstance3D` trees, ground cover, mushrooms, fireflies, built-in `BoxMesh` ground and boundaries, and `CylinderMesh` bloom clearings.
+- **License**: Original project composition using built-in Godot mesh primitives and materials; Godot Engine is MIT licensed. No external model, texture, or font assets are used.
 
 ### 2. Materials & Shaders
 - **Sanctuary Materials**: Custom Godot `StandardMaterial3D` with albedo, emission, and roughness parameters.

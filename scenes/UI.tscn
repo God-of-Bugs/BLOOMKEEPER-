@@ -1,13 +1,13 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://dyc5nskdhtwd4"]
 
 [ext_resource type="Script" path="res://scripts/ui.gd" id="1_ui"]
 
-[node name="UI" type="CanvasLayer"]
+[node name="UI" type="CanvasLayer" unique_id=28888719]
 process_mode = 3
 layer = 100
 script = ExtResource("1_ui")
 
-[node name="HUD" type="Control" parent="."]
+[node name="HUD" type="Control" parent="." unique_id=554629296]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -15,38 +15,54 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="HUD"]
+[node name="MarginContainer" type="MarginContainer" parent="HUD" unique_id=830145018]
 layout_mode = 1
 offset_left = 20.0
 offset_top = 20.0
 offset_right = 320.0
 offset_bottom = 120.0
 
-[node name="VBoxContainer" type="VBoxContainer" parent="HUD/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/MarginContainer" unique_id=1409172200]
 layout_mode = 2
 
-[node name="SpiritsLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer"]
+[node name="SpiritsLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer" unique_id=368747012]
 layout_mode = 2
-text = "Spirits Pacified: 0 / 5"
+text = "PROWLERS BLOOMED  ·  0 / 5"
 
-[node name="HealthLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer"]
+[node name="HealthLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer" unique_id=950928040]
 layout_mode = 2
-text = "Health: ❤ ❤ ❤"
+text = "VITALITY  ♥ ♥ ♥"
 
-[node name="EnergyBox" type="HBoxContainer" parent="HUD/MarginContainer"]
+[node name="AbsorptionBox" type="VBoxContainer" parent="HUD/MarginContainer/VBoxContainer"]
 layout_mode = 2
-alignment = 2
 
-[node name="EnergyLabel" type="Label" parent="HUD/MarginContainer/EnergyBox"]
+[node name="AbsorptionLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer/AbsorptionBox"]
+visible = false
 layout_mode = 2
-text = "Bloom Energy: "
+text = "HOLD F TO ABSORB"
 
-[node name="EnergyBar" type="ProgressBar" parent="HUD/MarginContainer/EnergyBox"]
-custom_minimum_size = Vector2(150, 20)
+[node name="AbsorptionBar" type="ProgressBar" parent="HUD/MarginContainer/VBoxContainer/AbsorptionBox"]
+visible = false
+custom_minimum_size = Vector2(240, 14)
+layout_mode = 2
+max_value = 100.0
+show_percentage = false
+
+[node name="EnergyBox" type="HBoxContainer" parent="HUD/MarginContainer/VBoxContainer" unique_id=478938567]
+layout_mode = 2
+alignment = 0
+
+[node name="EnergyLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer/EnergyBox" unique_id=742872277]
+layout_mode = 2
+text = "LUMEN  100%"
+
+[node name="EnergyBar" type="ProgressBar" parent="HUD/MarginContainer/VBoxContainer/EnergyBox" unique_id=324680597]
+custom_minimum_size = Vector2(180, 16)
 layout_mode = 2
 value = 100.0
+show_percentage = false
 
-[node name="TitlePanel" type="PanelContainer" parent="."]
+[node name="TitlePanel" type="PanelContainer" parent="." unique_id=1919982725]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -59,47 +75,47 @@ offset_bottom = 180.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="TitlePanel"]
+[node name="MarginContainer" type="MarginContainer" parent="TitlePanel" unique_id=1056176341]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TitlePanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="TitlePanel/MarginContainer" unique_id=2006981176]
 layout_mode = 2
 alignment = 1
 
-[node name="TitleLabel" type="Label" parent="TitlePanel/MarginContainer/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="TitlePanel/MarginContainer/VBoxContainer" unique_id=59953498]
 layout_mode = 2
 text = "BLOOMKEEPER"
 horizontal_alignment = 1
 
-[node name="TaglineLabel" type="Label" parent="TitlePanel/MarginContainer/VBoxContainer"]
+[node name="TaglineLabel" type="Label" parent="TitlePanel/MarginContainer/VBoxContainer" unique_id=1779337823]
 layout_mode = 2
 text = "\"The only weapon is light. The only victory is peace.\""
 horizontal_alignment = 1
 
-[node name="HSeparator" type="HSeparator" parent="TitlePanel/MarginContainer/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="TitlePanel/MarginContainer/VBoxContainer" unique_id=1716601681]
 layout_mode = 2
 
-[node name="ObjectiveLabel" type="Label" parent="TitlePanel/MarginContainer/VBoxContainer"]
+[node name="ObjectiveLabel" type="Label" parent="TitlePanel/MarginContainer/VBoxContainer" unique_id=1538896640]
 layout_mode = 2
 text = "OBJECTIVE:
-Evade corrupted shadow creatures and restore the sanctuary using Bloom Pulse.
+Find the five wandering Prowlers across the forest. Stand within about 3 m and hold F to absorb their shadow safely; each Bloom restores its own forest clearing.
 
 CONTROLS:
-WASD / Arrow Keys - Move
-Shift - Dash Evade
-E / Right Mouse Button - Bloom Pulse (Hold to Charge)
-ESC - Pause Game"
+WASD - Move  ·  Mouse - Look
+F - Hold to Absorb nearby Prowler
+E / Right Mouse - Bloom Pulse
+Shift - Dash  ·  ESC - Pause"
 horizontal_alignment = 1
 
-[node name="HSeparator2" type="HSeparator" parent="TitlePanel/MarginContainer/VBoxContainer"]
+[node name="HSeparator2" type="HSeparator" parent="TitlePanel/MarginContainer/VBoxContainer" unique_id=116545888]
 layout_mode = 2
 
-[node name="PromptLabel" type="Label" parent="TitlePanel/MarginContainer/VBoxContainer"]
+[node name="PromptLabel" type="Label" parent="TitlePanel/MarginContainer/VBoxContainer" unique_id=1741964089]
 layout_mode = 2
 text = "Press SPACE or CLICK to Begin"
 horizontal_alignment = 1
 
-[node name="PausePanel" type="PanelContainer" parent="."]
+[node name="PausePanel" type="PanelContainer" parent="." unique_id=238939711]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -113,28 +129,28 @@ offset_bottom = 120.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="PausePanel"]
+[node name="MarginContainer" type="MarginContainer" parent="PausePanel" unique_id=1288819235]
 layout_mode = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="PausePanel/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="PausePanel/MarginContainer" unique_id=1618086387]
 layout_mode = 2
 alignment = 1
 
-[node name="PauseLabel" type="Label" parent="PausePanel/MarginContainer/VBoxContainer"]
+[node name="PauseLabel" type="Label" parent="PausePanel/MarginContainer/VBoxContainer" unique_id=269437302]
 layout_mode = 2
 text = "GAME PAUSED"
 horizontal_alignment = 1
 
-[node name="HSeparator" type="HSeparator" parent="PausePanel/MarginContainer/VBoxContainer"]
+[node name="HSeparator" type="HSeparator" parent="PausePanel/MarginContainer/VBoxContainer" unique_id=144865287]
 layout_mode = 2
 
-[node name="InstructionsLabel" type="Label" parent="PausePanel/MarginContainer/VBoxContainer"]
+[node name="InstructionsLabel" type="Label" parent="PausePanel/MarginContainer/VBoxContainer" unique_id=586975679]
 layout_mode = 2
 text = "ESC - Resume Game
 R - Restart Sanctuary"
 horizontal_alignment = 1
 
-[node name="VictoryPanel" type="PanelContainer" parent="."]
+[node name="VictoryPanel" type="PanelContainer" parent="." unique_id=1861779384]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -142,25 +158,26 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -220.0
-offset_top = -110.0
+offset_top = -330.0
 offset_right = 220.0
-offset_bottom = 110.0
+offset_bottom = -110.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="VictoryPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="VictoryPanel" unique_id=1054240325]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VictoryPanel/MarginContainer"]
+[node name="Label" type="Label" parent="VictoryPanel/MarginContainer" unique_id=734160157]
 layout_mode = 2
-text = "SANCTUARY RESTORED!
-The light has pacified all corrupted creatures.
+text = "THE FOREST REMEMBERS
+All five Prowlers have bloomed.
+The whole forest is restored.
 
 Press R to Play Again"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="GameOverPanel" type="PanelContainer" parent="."]
+[node name="GameOverPanel" type="PanelContainer" parent="." unique_id=1095957497]
 visible = false
 anchors_preset = 8
 anchor_left = 0.5
@@ -174,13 +191,13 @@ offset_bottom = 110.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="GameOverPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="GameOverPanel" unique_id=2139978151]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="GameOverPanel/MarginContainer"]
+[node name="Label" type="Label" parent="GameOverPanel/MarginContainer" unique_id=96344715]
 layout_mode = 2
-text = "SANCTUARY FALLEN
-Game Over
+text = "THE LIGHT FADES
+You can always begin again.
 
 Press R to Restart"
 horizontal_alignment = 1

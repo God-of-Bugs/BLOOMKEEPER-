@@ -1,45 +1,56 @@
 [gd_scene format=3 uid="uid://c518k58t3nbqk"]
 
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="1_player"]
-[ext_resource type="PackedScene" path="res://scenes/Prowler.tscn" id="2_prowler"]
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="3_game_manager"]
-[ext_resource type="PackedScene" path="res://scenes/UI.tscn" id="4_ui"]
+[ext_resource type="PackedScene" uid="uid://dyc5nskdhtwd4" path="res://scenes/UI.tscn" id="4_ui"]
 [ext_resource type="Script" path="res://scripts/audio_manager.gd" id="5_audio_manager"]
+[ext_resource type="Script" path="res://scripts/forest_arena.gd" id="6_forest"]
+
+[sub_resource type="ProceduralSkyMaterial" id="SkyMaterial_sanctuary"]
+sky_top_color = Color(0.13, 0.25, 0.29, 1)
+sky_horizon_color = Color(0.48, 0.62, 0.54, 1)
+sky_curve = 0.22
+ground_bottom_color = Color(0.11, 0.15, 0.13, 1)
+ground_horizon_color = Color(0.43, 0.54, 0.44, 1)
+
+[sub_resource type="Sky" id="Sky_sanctuary"]
+sky_material = SubResource("SkyMaterial_sanctuary")
 
 [sub_resource type="Environment" id="Environment_sanctuary"]
-background_mode = 1
-background_color = Color(0.025, 0.035, 0.065, 1)
+background_mode = 2
+background_color = Color(0.16, 0.27, 0.27, 1)
+sky = SubResource("Sky_sanctuary")
 ambient_light_source = 3
-ambient_light_color = Color(0.29, 0.34, 0.48, 1)
-ambient_light_energy = 1.2
+ambient_light_color = Color(0.23, 0.3, 0.26, 1)
+ambient_light_energy = 0.78
 reflected_light_source = 2
 fog_enabled = true
-fog_light_color = Color(0.07, 0.1, 0.17, 1)
-fog_density = 0.001
+fog_light_color = Color(0.2, 0.29, 0.25, 1)
+fog_density = 0.0035
 
 [sub_resource type="BoxMesh" id="BoxMesh_floor"]
-size = Vector3(24, 0.5, 24)
+size = Vector3(64, 0.5, 64)
 
 [sub_resource type="StandardMaterial3D" id="Material_floor"]
-albedo_color = Color(0.13, 0.16, 0.2, 1)
+albedo_color = Color(0.1, 0.18, 0.12, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape_floor"]
-size = Vector3(24, 0.5, 24)
+size = Vector3(64, 0.5, 64)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall"]
-size = Vector3(24, 3, 0.6)
+size = Vector3(64, 5, 0.8)
 
 [sub_resource type="StandardMaterial3D" id="Material_wall"]
-albedo_color = Color(0.085, 0.105, 0.15, 1)
+albedo_color = Color(0.09, 0.15, 0.13, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape_wall"]
-size = Vector3(24, 3, 0.6)
+size = Vector3(64, 5, 0.8)
 
 [sub_resource type="BoxMesh" id="BoxMesh_side_wall"]
-size = Vector3(0.6, 3, 24)
+size = Vector3(0.8, 5, 64)
 
 [sub_resource type="BoxShape3D" id="BoxShape_side_wall"]
-size = Vector3(0.6, 3, 24)
+size = Vector3(0.8, 5, 64)
 
 [node name="Main" type="Node3D" unique_id=1003365631]
 
@@ -47,28 +58,26 @@ size = Vector3(0.6, 3, 24)
 environment = SubResource("Environment_sanctuary")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=400378133]
-transform = Transform3D(0.88294756, 0.36994863, -0.2890356, 0, 0.6156615, 0.7880107, 0.46947157, -0.6957722, 0.5435968, 0, 0, 0)
-light_color = Color(0.72, 0.79, 1, 1)
-light_energy = 2.0
+transform = Transform3D(0.8472551, 0.4226126, -0.3218033, 0, 0.6058201, 0.7956016, 0.5311862, -0.6740775, 0.5132842, 0, 0, 0)
+light_color = Color(0.91, 0.84, 0.67, 1)
+light_energy = 1.15
 shadow_enabled = true
 
 [node name="Player" parent="." unique_id=1364550572 instance=ExtResource("1_player")]
 
-[node name="Prowler" parent="." instance=ExtResource("2_prowler")]
-position = Vector3(3.5, 0, -1.5)
-
-[node name="GameManager" type="Node" parent="."]
+[node name="GameManager" type="Node" parent="." unique_id=504273578]
 script = ExtResource("3_game_manager")
 
-[node name="UI" parent="." instance=ExtResource("4_ui")]
+[node name="UI" parent="." unique_id=1528801591 instance=ExtResource("4_ui")]
 
-[node name="AudioManager" type="Node" parent="."]
+[node name="AudioManager" type="Node" parent="." unique_id=1560350114]
 script = ExtResource("5_audio_manager")
 
 [node name="Arena" type="Node3D" parent="." unique_id=1626148029]
 
 [node name="Ground" type="StaticBody3D" parent="Arena" unique_id=1453309595]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
+collision_mask = 2
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/Ground" unique_id=1702526661]
 mesh = SubResource("BoxMesh_floor")
@@ -78,7 +87,8 @@ surface_material_override/0 = SubResource("Material_floor")
 shape = SubResource("BoxShape_floor")
 
 [node name="NorthBoundary" type="StaticBody3D" parent="Arena" unique_id=931142409]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -31.8)
+collision_mask = 2
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/NorthBoundary" unique_id=190396789]
 mesh = SubResource("BoxMesh_wall")
@@ -88,7 +98,8 @@ surface_material_override/0 = SubResource("Material_wall")
 shape = SubResource("BoxShape_wall")
 
 [node name="SouthBoundary" type="StaticBody3D" parent="Arena" unique_id=612745436]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 12)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 31.8)
+collision_mask = 2
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/SouthBoundary" unique_id=1995570614]
 mesh = SubResource("BoxMesh_wall")
@@ -98,7 +109,8 @@ surface_material_override/0 = SubResource("Material_wall")
 shape = SubResource("BoxShape_wall")
 
 [node name="WestBoundary" type="StaticBody3D" parent="Arena" unique_id=631378612]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.8, 2.5, 0)
+collision_mask = 2
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/WestBoundary" unique_id=365149247]
 mesh = SubResource("BoxMesh_side_wall")
@@ -108,7 +120,8 @@ surface_material_override/0 = SubResource("Material_wall")
 shape = SubResource("BoxShape_side_wall")
 
 [node name="EastBoundary" type="StaticBody3D" parent="Arena" unique_id=2084171049]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.8, 2.5, 0)
+collision_mask = 2
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Arena/EastBoundary" unique_id=609936923]
 mesh = SubResource("BoxMesh_side_wall")
@@ -116,3 +129,6 @@ surface_material_override/0 = SubResource("Material_wall")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Arena/EastBoundary" unique_id=736152822]
 shape = SubResource("BoxShape_side_wall")
+
+[node name="Forest" type="Node3D" parent="Arena" unique_id=2080537664]
+script = ExtResource("6_forest")

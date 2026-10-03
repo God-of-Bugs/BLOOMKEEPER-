@@ -1,37 +1,65 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/adventurer_model.gd" id="2_adventurer_model"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_player"]
-radius = 0.45
-height = 1.8
+radius = 0.4
+height = 1.9
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_body"]
 radius = 0.4
 height = 1.7
 
 [sub_resource type="StandardMaterial3D" id="Material_body"]
-albedo_color = Color(0.51, 0.72, 0.69, 1)
+albedo_color = Color(0.13, 0.24, 0.2, 1)
 roughness = 0.9
 
 [sub_resource type="SphereMesh" id="SphereMesh_head"]
 radius = 0.32
 height = 0.64
+radial_segments = 10
+rings = 5
 
 [sub_resource type="StandardMaterial3D" id="Material_head"]
 albedo_color = Color(0.76, 0.83, 0.76, 1)
 roughness = 0.85
 
+[sub_resource type="TorusMesh" id="TorusMesh_pulse"]
+inner_radius = 0.95
+outer_radius = 1.0
+
+[sub_resource type="StandardMaterial3D" id="Material_pulse_ring"]
+transparency = 1
+albedo_color = Color(0.4, 0.95, 0.75, 0.48)
+emission_enabled = true
+emission = Color(0.4, 0.95, 0.75, 1.0)
+emission_energy_multiplier = 2.0
+
+[sub_resource type="StandardMaterial3D" id="Material_absorption_beam"]
+albedo_color = Color(0.65, 0.95, 0.62, 0.85)
+emission_enabled = true
+emission = Color(0.63, 1.0, 0.55, 1.0)
+emission_energy_multiplier = 2.2
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_absorption_beam"]
+radius = 1.0
+height = 2.0
+radial_segments = 6
+rings = 3
+
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
-collision_mask = 5
+collision_mask = 1
 script = ExtResource("1_player")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-position = Vector3(0, 0.9, 0)
+position = Vector3(0, 0.95, 0)
 shape = SubResource("CapsuleShape_player")
 
 [node name="Model" type="Node3D" parent="."]
+position = Vector3(0, 0.06, 0)
+script = ExtResource("2_adventurer_model")
 
 [node name="Body" type="MeshInstance3D" parent="Model"]
 position = Vector3(0, 0.85, 0)
@@ -44,13 +72,36 @@ mesh = SubResource("SphereMesh_head")
 surface_material_override/0 = SubResource("Material_head")
 
 [node name="CameraPivot" type="Node3D" parent="."]
-position = Vector3(0, 1.55, 0)
+position = Vector3(0, 1.58, 0)
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraPivot"]
-rotation = Vector3(-0.18, 0, 0)
-spring_length = 5.0
+rotation = Vector3(-0.24, 0, 0)
+spring_length = 7.1
 margin = 0.2
 
 [node name="Camera3D" type="Camera3D" parent="CameraPivot/SpringArm3D"]
 current = true
-fov = 70.0
+fov = 68.0
+
+[node name="PulseRing" type="MeshInstance3D" parent="."]
+position = Vector3(0, 0.12, 0)
+visible = false
+mesh = SubResource("TorusMesh_pulse")
+surface_material_override/0 = SubResource("Material_pulse_ring")
+
+[node name="AbsorptionBeam" type="MeshInstance3D" parent="."]
+visible = false
+cast_shadow = 0
+mesh = SubResource("CapsuleMesh_absorption_beam")
+material_override = SubResource("Material_absorption_beam")
+
+[node name="AbsorbPrompt" type="Label3D" parent="."]
+position = Vector3(0, 2.55, 0)
+visible = false
+text = "E  ·  HOLD TO BLOOM"
+font_size = 46
+outline_size = 10
+billboard = 1
+no_depth_test = true
+fixed_size = true
+modulate = Color(0.78, 1, 0.73, 1)

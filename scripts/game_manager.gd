@@ -3,7 +3,7 @@ extends Node
 
 signal victory_achieved
 signal game_over_triggered
-signal status_updated(pacified: int, total: int)
+signal status_updated(bloomed: int, total: int)
 
 @export var prowler_scene: PackedScene = preload("res://scenes/Prowler.tscn")
 
@@ -12,22 +12,23 @@ var pacified_count: int = 0
 var is_game_over: bool = false
 var is_victory: bool = false
 
-@onready var world_env: WorldEnvironment = get_node_or_null("../WorldEnvironment")
-@onready var dir_light: DirectionalLight3D = get_node_or_null("../DirectionalLight3D")
+@onready var world_env: WorldEnvironment = get_node_or_null("../WorldEnvironment") as WorldEnvironment
+@onready var dir_light: DirectionalLight3D = get_node_or_null("../DirectionalLight3D") as DirectionalLight3D
 @onready var audio_mgr: Node = get_node_or_null("../AudioManager")
+@onready var forest: Node = get_node_or_null("../Arena/Forest")
 
 var _last_player_hp: int = 3
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	await get_tree().process_frame
-	_setup_area_1()
+	_setup_forest_arena()
 
 
-func _setup_area_1() -> void:
+func _setup_forest_arena() -> void:
 	var main_node: Node = get_parent()
-	var player: CharacterBody3D = main_node.get_node_or_null("Player") as CharacterBody3D
-
+	var player: Node = main_node.get_node_or_null("Player")
 	if player:
 		if player.has_signal("player_defeated") and not player.is_connected("player_defeated", _on_player_defeated):
 			player.connect("player_defeated", _on_player_defeated)
@@ -36,27 +37,34 @@ func _setup_area_1() -> void:
 		if player.has_signal("health_changed") and not player.is_connected("health_changed", _on_player_health_changed):
 			player.connect("health_changed", _on_player_health_changed)
 
-	var existing_prowlers: Array = get_tree().get_nodes_in_group("prowlers")
-	for prowler in existing_prowlers:
-		prowler.queue_free()
+	if prowler_scene and not prowler_scene.resource_path.is_empty():
+		var prowler_packed_scene: PackedScene = load(prowler_scene.resource_path) as PackedScene
+		if prowler_packed_scene:
+			prowler_scene = prowler_packed_scene
 
+	for existing_prowler: Node in get_tree().get_nodes_in_group("prowlers"):
+		existing_prowler.queue_free()
 	await get_tree().physics_frame
 
 	var spawn_positions: Array[Vector3] = [
-		Vector3(3.5, 0.0, -1.5),
-		Vector3(-4.0, 0.0, -3.0),
-		Vector3(5.0, 0.0, 4.0),
-		Vector3(-3.5, 0.0, 5.5),
-		Vector3(0.0, 0.0, -7.0)
+		Vector3(0.0, 0.0, -8.0),
+		Vector3(8.5, 0.0, -4.5),
+		Vector3(8.5, 0.0, 5.0),
+		Vector3(-8.5, 0.0, 5.0),
+		Vector3(-8.5, 0.0, -4.5)
 	]
-
 	total_creatures = spawn_positions.size()
 	pacified_count = 0
 
-	for pos in spawn_positions:
+	for index: int in range(spawn_positions.size()):
+		var spawn_position: Vector3 = spawn_positions[index]
 		var prowler_inst: CharacterBody3D = prowler_scene.instantiate() as CharacterBody3D
+		prowler_inst.set("roam_center", spawn_position)
+		prowler_inst.set("roam_radius", 3.0)
+		prowler_inst.set("roam_seed", index + 11)
+		prowler_inst.set("absorption_progress", 0.0)
 		main_node.add_child(prowler_inst)
-		prowler_inst.global_position = pos
+		prowler_inst.global_position = spawn_position
 		if prowler_inst.has_signal("pacified"):
 			prowler_inst.connect("pacified", _on_creature_pacified)
 
@@ -70,56 +78,57 @@ func _on_player_pulse(_origin: Vector3, _radius: float) -> void:
 
 
 func _on_player_health_changed(current_hp: int, _max_hp: int) -> void:
-	if current_hp < _last_player_hp:
-		if audio_mgr and audio_mgr.has_method("play_damage"):
-			audio_mgr.call("play_damage")
+	if current_hp < _last_player_hp and audio_mgr and audio_mgr.has_method("play_damage"):
+		audio_mgr.call("play_damage")
 	_last_player_hp = current_hp
 
 
 func _on_creature_pacified() -> void:
-	if is_game_over or is_victory:
+	if is_game_over or is_victory or pacified_count >= total_creatures:
 		return
-
 	if audio_mgr and audio_mgr.has_method("play_pacify"):
 		audio_mgr.call("play_pacify")
 
 	pacified_count += 1
-	var ratio: float = float(pacified_count) / float(total_creatures)
-	_update_world_transformation(ratio)
 	status_updated.emit(pacified_count, total_creatures)
-
 	if pacified_count >= total_creatures:
 		is_victory = true
+		_update_world_transformation(1.0)
+		if forest and forest.has_method("restore_forest"):
+			forest.call("restore_forest")
 		if audio_mgr and audio_mgr.has_method("play_victory"):
 			audio_mgr.call("play_victory")
 		victory_achieved.emit()
-		print("--- SANCTUARY RESTORED! VICTORY! ---")
+		get_tree().paused = true
+		print("--- ALL FIVE PROWLERS HAVE BLOOMED: FOREST RESTORED! ---")
 
 
 func _update_world_transformation(ratio: float) -> void:
+	if ratio < 1.0:
+		return
 	if world_env and world_env.environment:
-		var env: Environment = world_env.environment
-		env.ambient_light_color = Color(0.29, 0.34, 0.48).lerp(Color(0.42, 0.65, 0.52), ratio)
-		env.fog_light_color = Color(0.07, 0.1, 0.17).lerp(Color(0.3, 0.45, 0.4), ratio)
-		env.fog_density = lerpf(0.001, 0.0002, ratio)
-
+		var environment: Environment = world_env.environment
+		environment.ambient_light_color = Color("a7d59c")
+		environment.ambient_light_energy = 1.5
+		environment.fog_light_color = Color("c2e4b0")
+		environment.fog_density = 0.0007
 	if dir_light:
-		dir_light.light_energy = lerpf(2.0, 3.2, ratio)
-		dir_light.light_color = Color(0.72, 0.79, 1.0).lerp(Color(0.95, 0.98, 0.88), ratio)
+		dir_light.light_energy = 2.2
+		dir_light.light_color = Color("fff0c5")
 
 
 func _on_player_defeated() -> void:
 	if is_victory or is_game_over:
 		return
-
 	is_game_over = true
 	if audio_mgr and audio_mgr.has_method("play_game_over"):
 		audio_mgr.call("play_game_over")
 	game_over_triggered.emit()
+	get_tree().paused = true
 	print("--- GAME OVER! Press R to Restart ---")
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if (is_game_over or is_victory) and event is InputEventKey and event.pressed:
-		if event.keycode == KEY_R:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_R:
+		if is_game_over or is_victory or get_tree().paused:
 			get_tree().reload_current_scene()
