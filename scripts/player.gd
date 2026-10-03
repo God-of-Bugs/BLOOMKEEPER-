@@ -99,8 +99,12 @@ func _register_mouse_pulse_action(action_name: String, mouse_button: MouseButton
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		_apply_camera_motion(event.relative)
+	if event is InputEventMouseMotion:
+		var mouse_motion: InputEventMouseMotion = event as InputEventMouseMotion
+		var motion_delta: Vector2 = mouse_motion.screen_relative
+		if motion_delta.is_zero_approx():
+			motion_delta = mouse_motion.relative
+		_apply_camera_motion(motion_delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:

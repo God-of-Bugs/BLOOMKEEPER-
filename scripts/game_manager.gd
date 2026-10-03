@@ -18,9 +18,17 @@ var is_victory: bool = false
 @onready var forest: Node = get_node_or_null("../Arena/Forest")
 
 var _last_player_hp: int = 3
+var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
+var _spawned_positions: Array[Vector3] = []
+var _reserved_relocation_positions: Array[Vector3] = []
+const SPAWN_BOUNDARY: float = 27.0
+const MIN_ENEMY_SPACING: float = 8.0
+const MIN_PLAYER_SPAWN_DISTANCE: float = 9.0
 
 
 func _ready() -> void:
+	_rng.randomize()
+	add_to_group("game_manager")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_setup_forest_arena.call_deferred()
 
@@ -44,22 +52,18 @@ func _setup_forest_arena() -> void:
 	for existing_prowler: Node in get_tree().get_nodes_in_group("prowlers"):
 		existing_prowler.queue_free()
 
-	var spawn_positions: Array[Vector3] = [
-		Vector3(0.0, 0.0, -4.0),
-		Vector3(4.8, 0.0, -3.2),
-		Vector3(4.8, 0.0, 3.2),
-		Vector3(-4.8, 0.0, 3.2),
-		Vector3(-4.8, 0.0, -3.2)
-	]
-	total_creatures = spawn_positions.size()
+	_spawned_positions.clear()
+	var player_position: Vector3 = (player as Node3D).global_position if player else Vector3.ZERO
+	total_creatures = 5
 	pacified_count = 0
 
-	for index: int in range(spawn_positions.size()):
-		var spawn_position: Vector3 = spawn_positions[index]
+	for index: int in range(total_creatures):
+		var spawn_position: Vector3 = _choose_valid_enemy_position(player_position, _spawned_positions)
+		_spawned_positions.append(spawn_position)
 		var prowler_inst: CharacterBody3D = prowler_scene.instantiate() as CharacterBody3D
 		prowler_inst.set("roam_center", spawn_position)
 		prowler_inst.set("roam_radius", 3.0)
-		prowler_inst.set("roam_seed", index + 11)
+		prowler_inst.set("roam_seed", _rng.randi_range(1, 2147483647))
 		prowler_inst.set("absorption_progress", 0.0)
 		main_node.add_child(prowler_inst)
 		prowler_inst.global_position = spawn_position
@@ -68,6 +72,76 @@ func _setup_forest_arena() -> void:
 
 	_update_world_transformation(0.0)
 	status_updated.emit(pacified_count, total_creatures)
+
+
+func _choose_valid_enemy_position(player_position: Vector3, other_positions: Array[Vector3]) -> Vector3:
+	for attempt: int in range(100):
+		var candidate: Vector3 = Vector3(
+			_rng.randf_range(-SPAWN_BOUNDARY, SPAWN_BOUNDARY),
+			0.0,
+			_rng.randf_range(-SPAWN_BOUNDARY, SPAWN_BOUNDARY)
+		)
+		if _planar_distance(candidate, player_position) < MIN_PLAYER_SPAWN_DISTANCE:
+			continue
+		var has_clearance: bool = true
+		for other_position: Vector3 in other_positions:
+			if _planar_distance(candidate, other_position) < MIN_ENEMY_SPACING:
+				has_clearance = false
+				break
+		if has_clearance:
+			return candidate
+	for fallback_attempt: int in range(200):
+		var fallback: Vector3 = Vector3(
+			_rng.randf_range(-SPAWN_BOUNDARY, SPAWN_BOUNDARY),
+			0.0,
+			_rng.randf_range(-SPAWN_BOUNDARY, SPAWN_BOUNDARY)
+		)
+		var spacing_ok: bool = _planar_distance(fallback, player_position) >= MIN_PLAYER_SPAWN_DISTANCE
+		for other_position: Vector3 in other_positions:
+			spacing_ok = spacing_ok and _planar_distance(fallback, other_position) >= MIN_ENEMY_SPACING
+		if spacing_ok:
+			return fallback
+	for grid_x: int in range(-6, 7):
+		for grid_z: int in range(-6, 7):
+			var grid_candidate: Vector3 = Vector3(float(grid_x) * 4.0, 0.0, float(grid_z) * 4.0)
+			if _planar_distance(grid_candidate, player_position) < MIN_PLAYER_SPAWN_DISTANCE:
+				continue
+			var grid_clear: bool = true
+			for other_position: Vector3 in other_positions:
+				if _planar_distance(grid_candidate, other_position) < MIN_ENEMY_SPACING:
+					grid_clear = false
+					break
+			if grid_clear:
+				return grid_candidate
+	push_error("No safe enemy spawn position could be found within arena bounds.")
+	return Vector3.ZERO
+
+
+func _planar_distance(first: Vector3, second: Vector3) -> float:
+	var offset: Vector3 = first - second
+	offset.y = 0.0
+	return offset.length()
+
+
+func request_enemy_relocation(enemy: Node3D) -> Vector3:
+	var player_node: Node3D = get_tree().get_first_node_in_group("player") as Node3D
+	var player_position: Vector3 = player_node.global_position if player_node else Vector3.ZERO
+	var occupied_positions: Array[Vector3] = _reserved_relocation_positions.duplicate()
+	for active_node: Node in get_tree().get_nodes_in_group("prowlers"):
+		var active_enemy: Node3D = active_node as Node3D
+		if active_enemy:
+			occupied_positions.append(active_enemy.global_position)
+	occupied_positions.append(enemy.global_position)
+	var destination: Vector3 = _choose_valid_enemy_position(player_position, occupied_positions)
+	_reserved_relocation_positions.append(destination)
+	return destination
+
+
+func release_enemy_relocation(position: Vector3) -> void:
+	for index: int in range(_reserved_relocation_positions.size()):
+		if _reserved_relocation_positions[index].distance_to(position) < 0.01:
+			_reserved_relocation_positions.remove_at(index)
+			return
 
 
 func _on_player_pulse(_origin: Vector3, _radius: float) -> void:
@@ -101,7 +175,6 @@ func _on_creature_pacified() -> void:
 
 func _finish_victory_sequence() -> void:
 	await get_tree().create_timer(2.8).timeout
-	print("--- ALL FIVE PROWLERS HAVE BLOOMED: FOREST RESTORED! ---")
 	victory_achieved.emit()
 	get_tree().paused = true
 
@@ -134,7 +207,6 @@ func _on_player_defeated() -> void:
 		audio_mgr.call("play_game_over")
 	game_over_triggered.emit()
 	get_tree().paused = true
-	print("--- GAME OVER! Press R to Restart ---")
 
 
 func _unhandled_input(event: InputEvent) -> void:

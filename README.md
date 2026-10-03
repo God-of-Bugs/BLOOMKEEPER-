@@ -8,7 +8,7 @@ A stylized 3D low-poly pacifist exploration game built in Godot 4 for the **Godo
 
 ## 🌟 Game Overview
 
-You are a light-bearer lost in a dim forest. Five bark-bound Prowlers wander their own small territories. They do not hunt or hurt you: approach one and hold **F** to draw out the corruption and help it Bloom. Each Bloom restores a small clearing around that Prowler. Only when all five have bloomed does warm light return across the entire forest.
+You are a light-bearer lost in a dim forest. Five bark-bound Prowlers wander the arena and occasionally relocate to new clearings. They do not hunt or hurt you: approach an active Prowler from the front and remain within close range to automatically draw out its corruption and help it Bloom. Each Bloom restores a small clearing around that Prowler. Only when all five have bloomed does warm light return across the entire forest.
 
 The optional **Bloom Pulse** (E or right mouse) sends out a calming wave and can soften a nearby Prowler's resistance, but it cannot complete a Bloom on its own. This is a pacifist restoration journey, not a combat arena.
 
@@ -18,7 +18,7 @@ The optional **Bloom Pulse** (E or right mouse) sends out a calming wave and can
 
 - **WASD**: Move
 - **Mouse**: Look around
-- **F (hold within about 3 m of a Prowler)**: Absorb its shadow and Bloom it (about 2 seconds)
+- **Automatic Bloom**: Face an active Prowler and stay within 2.7 m until its Bloom completes
 - **E / Right Mouse Button**: Optional Bloom Pulse (tap or hold to expand to 7.5m)
 - **Shift**: Dash
 - **ESC**: Pause Game / Resume
@@ -29,7 +29,7 @@ The optional **Bloom Pulse** (E or right mouse) sends out a calming wave and can
 ## 🍃 Core Gameplay Loop
 
 1. **Explore** the single, larger forest arena and locate five wandering Prowlers.
-2. **Approach** an unbloomed Prowler; hold **F** within about 3 m to absorb its shadow. Prowlers roam but never attack.
+2. **Approach** an unbloomed Prowler from the front and stay within 2.7 m; shadow absorption begins automatically. Prowlers roam, occasionally relocate, but never attack.
 3. **Restore a clearing** around each Prowler when it Blooms. The rest of the forest remains dim while any Prowler remains.
 4. **Restore the forest**: Bloom all five Prowlers to trigger the global lighting and canopy transformation and win.
 5. Use **Bloom Pulse** as optional, nonlethal aid; pulses calm and partially soften nearby Prowlers, but do not replace the close-range absorption.

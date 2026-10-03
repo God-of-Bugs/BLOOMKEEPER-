@@ -17,6 +17,8 @@ signal game_started
 var is_game_started: bool = false
 var is_paused: bool = false
 var _elapsed_seconds: float = 0.0
+var _countdown_seconds: float = 170.0
+var _countdown_label: Label = null
 var _bloomed_count: int = 0
 var _total_count: int = 5
 var _best_time: float = 0.0
@@ -40,6 +42,19 @@ func _ready() -> void:
 	game_over_panel.visible = false
 	title_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	$HUD.visible = false
+	_countdown_label = Label.new()
+	_countdown_label.name = "CountdownLabel"
+	_countdown_label.text = "TIME 02:50"
+	_countdown_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_countdown_label.add_theme_font_size_override("font_size", 24)
+	_countdown_label.add_theme_color_override("font_color", Color("f2f5dc"))
+	_countdown_label.add_theme_color_override("font_outline_color", Color(0.015, 0.035, 0.025, 0.95))
+	_countdown_label.add_theme_constant_override("outline_size", 4)
+	_countdown_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	_countdown_label.position = Vector2(-190.0, 24.0)
+	_countdown_label.size = Vector2(166.0, 40.0)
+	$HUD.add_child(_countdown_label)
+	_countdown_label.visible = false
 	$TitlePanel/MarginContainer/VBoxContainer/ObjectiveLabel.text = "RESTORE THE FOREST\nFind five wandering Prowlers. Approach within 2.7 m from the front to automatically absorb their shadow. Each bloom restores its clearing; all five awaken the whole forest.\n\nWASD Move  ·  Mouse Look\nE / Right Mouse Bloom Pulse  ·  Shift Dash  ·  ESC Pause"
 	$TitlePanel/MarginContainer/VBoxContainer/PromptLabel.text = "Choose how to enter the forest"
 	var objective_label: Label = $TitlePanel/MarginContainer/VBoxContainer/ObjectiveLabel as Label
@@ -78,8 +93,21 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if is_game_started and not get_tree().paused:
+	if not is_game_started:
+		return
+	if _game_has_ended():
+		_countdown_label.visible = false
+		return
+	if not get_tree().paused:
 		_elapsed_seconds += delta
+		_countdown_seconds = maxf(_countdown_seconds - delta, 0.0)
+		_countdown_label.text = "TIME %s" % _format_time(ceilf(_countdown_seconds))
+		if _countdown_seconds <= 0.0 and _game_manager and _game_manager.has_method("_on_player_defeated"):
+			_game_manager.call("_on_player_defeated")
+
+
+func _game_has_ended() -> bool:
+	return bool(_game_manager.get("is_victory")) or bool(_game_manager.get("is_game_over")) if _game_manager else false
 
 
 func _build_title_buttons() -> void:
@@ -298,6 +326,9 @@ func start_game() -> void:
 	is_game_started = true
 	title_panel.visible = false
 	$HUD.visible = true
+	_countdown_seconds = 170.0
+	_countdown_label.text = "TIME 02:50"
+	_countdown_label.visible = true
 	_page_overlay.visible = false
 	_elapsed_seconds = 0.0
 	get_tree().paused = false
@@ -370,11 +401,13 @@ func _on_absorption_status_changed(progress: float, active: bool, available: boo
 
 
 func _on_victory() -> void:
+	_countdown_label.visible = false
 	_save_completed_time()
 	victory_panel.visible = false
 	_show_victory_page()
 
 
 func _on_game_over() -> void:
+	_countdown_label.visible = false
 	game_over_panel.visible = false
 	_show_game_over_page()

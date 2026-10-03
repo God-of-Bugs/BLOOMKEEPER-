@@ -261,4 +261,3 @@ func restore_forest() -> void:
 		_tree_root.add_child(bloom)
 		bloom.position = bloom_position
 		_restoration_blooms.append(bloom)
-	print("The forest canopy warms as the last Prowler blooms; new flowers emerge across the sanctuary.")

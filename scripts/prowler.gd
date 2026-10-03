@@ -14,6 +14,7 @@ enum State { AGGRESSIVE, CALMING, PACIFIED }
 @export var roam_radius: float = 5.5
 @export var roam_speed: float = 0.62
 @export var roam_seed: int = 1
+@export_range(1.0, 30.0, 0.5) var relocation_interval: float = 5.0
 
 var absorption_progress: float = 0.0
 var _roam_target: Vector3 = Vector3.ZERO
@@ -27,6 +28,12 @@ var _flower: Node3D = null
 var _rng: RandomNumberGenerator = RandomNumberGenerator.new()
 var _walk_distance: float = 0.0
 var _target_is_set: bool = false
+var _relocation_timer: float = 0.0
+var _corruption_visual: MeshInstance3D = null
+var _relocation_tween: Tween = null
+var _reserved_relocation: Vector3 = Vector3.ZERO
+var _relocation_reserved: bool = false
+var _is_relocating: bool = false
 
 @onready var model: Node3D = $Model
 @onready var patch: Node3D = get_node_or_null("ForestPatch") as Node3D
@@ -44,6 +51,8 @@ func _ready() -> void:
 	add_to_group("creatures")
 	add_to_group("prowlers")
 	_rng.seed = int(roam_seed) if roam_seed > 0 else int(Time.get_ticks_usec())
+	_relocation_timer = _rng.randf_range(relocation_interval * 0.65, relocation_interval * 1.35)
+	_create_corruption_visual()
 	if state == State.PACIFIED:
 		remove_from_group("creatures")
 		remove_from_group("prowlers")
@@ -64,8 +73,29 @@ func _create_corruption_material() -> StandardMaterial3D:
 	return material
 
 
+func _create_corruption_visual() -> void:
+	var corruption_mesh: MeshInstance3D = MeshInstance3D.new()
+	corruption_mesh.name = "CorruptionGroundMark"
+	var ring: TorusMesh = TorusMesh.new()
+	ring.inner_radius = 0.72
+	ring.outer_radius = 1.05
+	ring.rings = 4
+	ring.ring_segments = 20
+	corruption_mesh.mesh = ring
+	corruption_mesh.position.y = 0.035
+	var material: StandardMaterial3D = StandardMaterial3D.new()
+	material.albedo_color = Color(0.055, 0.085, 0.064, 0.5)
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	corruption_mesh.material_override = material
+	corruption_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(corruption_mesh)
+	_corruption_visual = corruption_mesh
+
+
 func _physics_process(delta: float) -> void:
 	_animation_clock += delta
+	_process_relocation(delta)
 	if not is_on_floor():
 		velocity.y -= get_gravity().length() * delta
 	else:
@@ -87,6 +117,59 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 	_animate_roots(delta)
+
+
+func _process_relocation(delta: float) -> void:
+	if state != State.AGGRESSIVE or _being_absorbed or _is_relocating or not is_instance_valid(_corruption_visual):
+		return
+	_relocation_timer = maxf(_relocation_timer - delta, 0.0)
+	if _relocation_timer > 0.0:
+		return
+	var manager: Node = get_tree().get_first_node_in_group("game_manager")
+	if not manager or not manager.has_method("request_enemy_relocation"):
+		return
+	var relocation_position: Variant = manager.call("request_enemy_relocation", self)
+	if relocation_position is Vector3:
+		_reserved_relocation = relocation_position as Vector3
+		_relocation_reserved = true
+		_relocate_to(_reserved_relocation)
+	_relocation_timer = _rng.randf_range(relocation_interval * 0.65, relocation_interval * 1.35)
+
+
+func _relocate_to(new_position: Vector3) -> void:
+	if state != State.AGGRESSIVE or _being_absorbed or _is_relocating or is_equal_approx(global_position.distance_to(new_position), 0.0):
+		return
+	if _relocation_tween and _relocation_tween.is_running():
+		_relocation_tween.kill()
+	_is_relocating = true
+	_corruption_visual.visible = true
+	_corruption_visual.scale = Vector3.ONE
+	_relocation_tween = create_tween()
+	_relocation_tween.set_trans(Tween.TRANS_SINE)
+	_relocation_tween.set_ease(Tween.EASE_IN_OUT)
+	_relocation_tween.tween_property(_corruption_visual, "scale", Vector3(0.05, 0.05, 0.05), 0.22)
+	_relocation_tween.tween_callback(func() -> void:
+		if state != State.AGGRESSIVE or _being_absorbed:
+			return
+		model.visible = false
+		global_position = new_position
+		velocity = Vector3.ZERO
+		roam_center = new_position
+		_choose_roam_target()
+	)
+	_relocation_tween.tween_property(_corruption_visual, "scale", Vector3.ONE, 0.28)
+	_relocation_tween.tween_callback(func() -> void:
+		if state == State.AGGRESSIVE and not _being_absorbed:
+			model.visible = true
+		if is_instance_valid(_corruption_visual):
+			_corruption_visual.visible = true
+		_is_relocating = false
+		if _relocation_reserved:
+			var manager: Node = get_tree().get_first_node_in_group("game_manager")
+			if manager and manager.has_method("release_enemy_relocation"):
+				manager.call("release_enemy_relocation", _reserved_relocation)
+			_relocation_reserved = false
+	)
 
 
 func _process_roaming(delta: float) -> void:
@@ -215,6 +298,15 @@ func pacify() -> void:
 		collider.set_deferred("disabled", true)
 	remove_from_group("creatures")
 	remove_from_group("prowlers")
+	if is_instance_valid(_corruption_visual):
+		_corruption_visual.visible = false
+	if _relocation_tween and _relocation_tween.is_running():
+		_relocation_tween.kill()
+	if _relocation_reserved:
+		var relocation_manager: Node = get_tree().get_first_node_in_group("game_manager")
+		if relocation_manager and relocation_manager.has_method("release_enemy_relocation"):
+			relocation_manager.call("release_enemy_relocation", _reserved_relocation)
+		_relocation_reserved = false
 	add_to_group("shrines")
 	add_to_group("pacified_creatures")
 	_bloom_into_flower()
