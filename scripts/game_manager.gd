@@ -22,8 +22,7 @@ var _last_player_hp: int = 3
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	await get_tree().process_frame
-	_setup_forest_arena()
+	_setup_forest_arena.call_deferred()
 
 
 func _setup_forest_arena() -> void:
@@ -44,14 +43,13 @@ func _setup_forest_arena() -> void:
 
 	for existing_prowler: Node in get_tree().get_nodes_in_group("prowlers"):
 		existing_prowler.queue_free()
-	await get_tree().physics_frame
 
 	var spawn_positions: Array[Vector3] = [
-		Vector3(0.0, 0.0, -8.0),
-		Vector3(8.5, 0.0, -4.5),
-		Vector3(8.5, 0.0, 5.0),
-		Vector3(-8.5, 0.0, 5.0),
-		Vector3(-8.5, 0.0, -4.5)
+		Vector3(0.0, 0.0, -4.0),
+		Vector3(4.8, 0.0, -3.2),
+		Vector3(4.8, 0.0, 3.2),
+		Vector3(-4.8, 0.0, 3.2),
+		Vector3(-4.8, 0.0, -3.2)
 	]
 	total_creatures = spawn_positions.size()
 	pacified_count = 0
@@ -98,9 +96,14 @@ func _on_creature_pacified() -> void:
 			forest.call("restore_forest")
 		if audio_mgr and audio_mgr.has_method("play_victory"):
 			audio_mgr.call("play_victory")
-		victory_achieved.emit()
-		get_tree().paused = true
-		print("--- ALL FIVE PROWLERS HAVE BLOOMED: FOREST RESTORED! ---")
+		_finish_victory_sequence()
+
+
+func _finish_victory_sequence() -> void:
+	await get_tree().create_timer(2.8).timeout
+	print("--- ALL FIVE PROWLERS HAVE BLOOMED: FOREST RESTORED! ---")
+	victory_achieved.emit()
+	get_tree().paused = true
 
 
 func _update_world_transformation(ratio: float) -> void:
@@ -108,13 +111,19 @@ func _update_world_transformation(ratio: float) -> void:
 		return
 	if world_env and world_env.environment:
 		var environment: Environment = world_env.environment
-		environment.ambient_light_color = Color("a7d59c")
-		environment.ambient_light_energy = 1.5
-		environment.fog_light_color = Color("c2e4b0")
-		environment.fog_density = 0.0007
+		var light_tween: Tween = create_tween()
+		light_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		light_tween.set_parallel(true)
+		light_tween.tween_property(environment, "ambient_light_color", Color("a7d59c"), 2.6)
+		light_tween.tween_property(environment, "ambient_light_energy", 1.5, 2.6)
+		light_tween.tween_property(environment, "fog_light_color", Color("c2e4b0"), 2.6)
+		light_tween.tween_property(environment, "fog_density", 0.0007, 2.6)
 	if dir_light:
-		dir_light.light_energy = 2.2
-		dir_light.light_color = Color("fff0c5")
+		var sunlight_tween: Tween = create_tween()
+		sunlight_tween.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		sunlight_tween.set_parallel(true)
+		sunlight_tween.tween_property(dir_light, "light_energy", 2.2, 2.6)
+		sunlight_tween.tween_property(dir_light, "light_color", Color("fff0c5"), 2.6)
 
 
 func _on_player_defeated() -> void:

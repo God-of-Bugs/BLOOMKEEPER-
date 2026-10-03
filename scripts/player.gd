@@ -9,7 +9,7 @@ signal player_defeated
 
 const MOVE_SPEED: float = 5.0
 const TURN_SPEED: float = 10.0
-const MOUSE_SENSITIVITY: float = 0.0024
+const MOUSE_SENSITIVITY: float = 0.004
 const MIN_CAMERA_PITCH: float = deg_to_rad(-62.0)
 const MAX_CAMERA_PITCH: float = deg_to_rad(18.0)
 const DASH_DISTANCE: float = 1.8
@@ -25,8 +25,8 @@ const BASE_PULSE_COST: float = 20.0
 const MAX_PULSE_COST: float = 45.0
 const MAX_HEALTH: int = 3
 const INVULNERABILITY_DURATION: float = 1.5
-const ABSORPTION_RANGE: float = 3.0
-const ABSORPTION_PROMPT_RANGE: float = 6.0
+const ABSORPTION_RANGE: float = 2.7
+const ABSORPTION_PROMPT_RANGE: float = 5.5
 const ABSORPTION_RATE: float = 52.0
 const ABSORPTION_ENERGY_RATE: float = 22.0
 
@@ -44,6 +44,9 @@ var _walk_distance: float = 0.0
 var current_energy: float = MAX_ENERGY
 var current_health: int = MAX_HEALTH
 var _invulnerability_timer: float = 0.0
+var _absorption_clock: float = 0.0
+var _transfer_motes: Array[MeshInstance3D] = []
+var _lantern_glow: OmniLight3D = null
 
 @onready var camera_pivot: Node3D = $CameraPivot
 @onready var model: Node3D = $Model
@@ -63,14 +66,17 @@ func _ready() -> void:
 	_register_move_action("move_left", KEY_A)
 	_register_move_action("move_right", KEY_D)
 	_register_move_action("dash", KEY_SHIFT)
-	_register_move_action("absorb", KEY_F)
 	_register_move_action("bloom_pulse", KEY_E)
 	_register_mouse_pulse_action("bloom_pulse", MOUSE_BUTTON_RIGHT)
 	if absorption_beam:
 		absorption_beam.visible = false
 	if absorb_prompt:
 		absorb_prompt.visible = false
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_create_transfer_motes()
+	var lantern_lights: Array[Node] = get_tree().get_nodes_in_group("player_lantern")
+	if not lantern_lights.is_empty():
+		_lantern_glow = lantern_lights[0] as OmniLight3D
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	energy_changed.emit(current_energy, MAX_ENERGY)
 	health_changed.emit(current_health, MAX_HEALTH)
 	absorption_status_changed.emit(0.0, false, false, false)
@@ -92,18 +98,25 @@ func _register_mouse_pulse_action(action_name: String, mouse_button: MouseButton
 	InputMap.action_add_event(action_name, mouse_event)
 
 
+func _input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		_apply_camera_motion(event.relative)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		camera_pivot.rotation.y -= event.relative.x * MOUSE_SENSITIVITY
-		camera_pivot.rotation.x = clampf(
-			camera_pivot.rotation.x - event.relative.y * MOUSE_SENSITIVITY,
-			MIN_CAMERA_PITCH,
-			MAX_CAMERA_PITCH
-		)
+
+
+func _apply_camera_motion(relative_motion: Vector2) -> void:
+	camera_pivot.rotation.y -= relative_motion.x * MOUSE_SENSITIVITY
+	camera_pivot.rotation.x = clampf(
+		camera_pivot.rotation.x - relative_motion.y * MOUSE_SENSITIVITY,
+		MIN_CAMERA_PITCH,
+		MAX_CAMERA_PITCH
+	)
 
 
 func _physics_process(delta: float) -> void:
@@ -127,12 +140,10 @@ func _physics_process(delta: float) -> void:
 	camera_forward = camera_forward.normalized()
 	camera_right = camera_right.normalized()
 	var move_direction: Vector3 = camera_right * input_vector.x + camera_forward * -input_vector.y
-	if _is_absorbing:
-		move_direction = Vector3.ZERO
 	if move_direction.length_squared() > 1.0:
 		move_direction = move_direction.normalized()
 
-	if Input.is_action_just_pressed("dash") and _dash_cooldown_timer <= 0.0 and not _is_absorbing:
+	if Input.is_action_just_pressed("dash") and _dash_cooldown_timer <= 0.0:
 		_dash_direction = move_direction
 		if _dash_direction.length_squared() <= 0.001:
 			_dash_direction = -model.global_basis.z
@@ -181,15 +192,61 @@ func _update_player_animation(delta: float, is_walking: bool) -> void:
 	model.position.y = lerpf(model.position.y, idle_breath, 7.0 * delta)
 
 
+func _create_transfer_motes() -> void:
+	var mote_mesh: SphereMesh = SphereMesh.new()
+	mote_mesh.radius = 0.11
+	mote_mesh.height = 0.22
+	mote_mesh.radial_segments = 7
+	mote_mesh.rings = 3
+	var mote_material: StandardMaterial3D = StandardMaterial3D.new()
+	mote_material.albedo_color = Color("f7de86")
+	mote_material.emission_enabled = true
+	mote_material.emission = Color("b8ff9a")
+	mote_material.emission_energy_multiplier = 2.2
+	for mote_index: int in range(4):
+		var mote: MeshInstance3D = MeshInstance3D.new()
+		mote.name = "AbsorptionMote%d" % mote_index
+		mote.mesh = mote_mesh
+		mote.material_override = mote_material
+		mote.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mote.visible = false
+		add_child(mote)
+		_transfer_motes.append(mote)
+
+
+func _update_transfer_motes(target: CharacterBody3D, active: bool) -> void:
+	for mote_index: int in range(_transfer_motes.size()):
+		var mote: MeshInstance3D = _transfer_motes[mote_index]
+		mote.visible = active and is_instance_valid(target)
+		if not mote.visible:
+			continue
+		var phase: float = fposmod(_absorption_clock * 0.82 + float(mote_index) / float(_transfer_motes.size()), 1.0)
+		var energy_start: Vector3 = target.global_position + Vector3(0.0, 1.35, 0.0)
+		var energy_end: Vector3 = global_position + model.global_basis * Vector3(0.45, 1.0, -0.18)
+		mote.global_position = energy_start.lerp(energy_end, phase) + Vector3(0.0, sin(phase * PI) * 0.22, 0.0)
+	if _lantern_glow:
+		_lantern_glow.light_energy = 0.8 + (0.42 if active else 0.0)
+
+
 func _process_absorption(delta: float) -> void:
-	var nearest_target: CharacterBody3D = _find_nearest_prowler()
+	_absorption_clock += delta
+	var nearest_target: CharacterBody3D = _absorption_target if _is_absorbing and is_instance_valid(_absorption_target) else _find_nearest_prowler()
 	var target_changed: bool = nearest_target != _absorption_target
 	var target_distance: float = INF
 	if nearest_target:
 		target_distance = _planar_distance_to(nearest_target)
 	var available: bool = is_instance_valid(nearest_target)
 	var in_range: bool = available and target_distance <= ABSORPTION_RANGE
-	var can_absorb: bool = in_range and Input.is_action_pressed("absorb")
+	if available and is_instance_valid(nearest_target) and nearest_target.has_method("is_absorbable"):
+		available = bool(nearest_target.call("is_absorbable"))
+		in_range = available and target_distance <= ABSORPTION_RANGE
+	var model_facing: Vector3 = nearest_target.model.global_basis.z if available else Vector3.ZERO
+	model_facing.y = 0.0
+	model_facing = model_facing.normalized()
+	var to_player: Vector3 = global_position - nearest_target.global_position if available else Vector3.ZERO
+	to_player.y = 0.0
+	var front_approach: bool = available and model_facing.dot(to_player.normalized()) >= 0.0
+	var can_absorb: bool = in_range and front_approach
 
 	if _is_absorbing and (target_changed or not can_absorb):
 		if is_instance_valid(_absorption_target):
@@ -198,17 +255,20 @@ func _process_absorption(delta: float) -> void:
 
 	_absorption_target = nearest_target
 	var progress: float = 0.0
+	var completed_this_frame: bool = false
 	if can_absorb and is_instance_valid(_absorption_target):
 		_is_absorbing = true
 		var energy_restored: float = float(_absorption_target.call("absorb_bloom", delta, ABSORPTION_RATE))
 		current_energy = minf(current_energy + energy_restored * ABSORPTION_ENERGY_RATE, MAX_ENERGY)
 		progress = float(_absorption_target.call("get_absorption_progress"))
+		completed_this_frame = int(_absorption_target.get("state")) == 2
 		energy_changed.emit(current_energy, MAX_ENERGY)
 	elif available:
 		progress = float(nearest_target.call("get_absorption_progress"))
 
-	var is_absorbing_target: bool = _is_absorbing and nearest_target == _absorption_target
+	var is_absorbing_target: bool = _is_absorbing and nearest_target == _absorption_target and not completed_this_frame
 	_update_absorption_prompt(nearest_target, progress, is_absorbing_target, in_range)
+	_update_transfer_motes(nearest_target, is_absorbing_target)
 	absorption_status_changed.emit(progress, is_absorbing_target, available, in_range)
 
 
@@ -235,23 +295,14 @@ func _planar_distance_to(target: Node3D) -> float:
 	return offset.length()
 
 
-func _update_absorption_prompt(target: CharacterBody3D, progress: float, active: bool, in_range: bool) -> void:
+func _update_absorption_prompt(target: CharacterBody3D, _progress: float, active: bool, in_range: bool) -> void:
 	if absorb_prompt:
-		absorb_prompt.visible = is_instance_valid(target)
-		if is_instance_valid(target):
-			if active:
-				absorb_prompt.text = "BLOOMING  %d%%" % roundi(progress * 100.0)
-			elif in_range:
-				absorb_prompt.text = "F  ·  HOLD TO ABSORB"
-			else:
-				absorb_prompt.text = "APPROACH TO BLOOM"
-			absorb_prompt.global_position = target.global_position + Vector3(0.0, 3.35, 0.0)
-			absorb_prompt.modulate = Color("b8ff9a") if in_range else Color("f1d99a")
+		absorb_prompt.visible = false
 	if absorption_beam:
 		absorption_beam.visible = active and in_range and is_instance_valid(target)
 		if absorption_beam.visible:
-			var beam_start: Vector3 = global_position + model.global_basis * Vector3(0.5, 1.0, -0.1)
-			var beam_end: Vector3 = target.global_position + Vector3(0.0, 1.25, 0.0)
+			var beam_start: Vector3 = target.global_position + Vector3(0.0, 1.25, 0.0)
+			var beam_end: Vector3 = global_position + model.global_basis * Vector3(0.5, 1.0, -0.1)
 			var beam_vector: Vector3 = beam_end - beam_start
 			var beam_length: float = maxf(beam_vector.length(), 0.1)
 			var beam_rotation: Quaternion = Quaternion(Vector3.UP, beam_vector.normalized())

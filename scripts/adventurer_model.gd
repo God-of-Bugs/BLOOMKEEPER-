@@ -83,6 +83,7 @@ func _build_glow() -> void:
 	lantern_light.name = "LanternGlow"
 	lantern_light.light_color = Color("f4c979")
 	lantern_light.light_energy = 0.8
+	lantern_light.add_to_group("player_lantern")
 	lantern_light.omni_range = 4.0
 	lantern_light.position = Vector3(0.55, 0.9, -0.08)
 	add_child(lantern_light)

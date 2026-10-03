@@ -39,7 +39,7 @@ layout_mode = 2
 [node name="AbsorptionLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer/AbsorptionBox"]
 visible = false
 layout_mode = 2
-text = "HOLD F TO ABSORB"
+text = "FACE THE PROWLER TO BEGIN BLOOM"
 
 [node name="AbsorptionBar" type="ProgressBar" parent="HUD/MarginContainer/VBoxContainer/AbsorptionBox"]
 visible = false

@@ -98,7 +98,7 @@ material_override = SubResource("Material_absorption_beam")
 [node name="AbsorbPrompt" type="Label3D" parent="."]
 position = Vector3(0, 2.55, 0)
 visible = false
-text = "E  ·  HOLD TO BLOOM"
+text = "FACE THE PROWLER TO BLOOM"
 font_size = 46
 outline_size = 10
 billboard = 1

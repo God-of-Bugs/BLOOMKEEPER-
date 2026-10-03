@@ -11,7 +11,10 @@ var _floor_material: StandardMaterial3D
 var _firefly_mesh_instance: MultiMeshInstance3D = null
 var _firefly_base_transforms: Array[Transform3D] = []
 var _firefly_clock: float = 0.0
+const BloomkeeperFlower = preload("res://scripts/restored_flower.gd")
+
 var _restored: bool = false
+var _restoration_blooms: Array[Node3D] = []
 
 
 func _process(delta: float) -> void:
@@ -246,4 +249,16 @@ func restore_forest() -> void:
 	restoration_tween.tween_property(_groundcover_material, "albedo_color", Color("61804b"), 2.2)
 	restoration_tween.tween_property(_floor_material, "albedo_color", Color("40513b"), 2.2)
 	restoration_tween.tween_property(_firefly_material, "emission_energy_multiplier", 3.8, 2.2)
-	print("The forest canopy warms as the last Prowler blooms.")
+	var bloom_positions: Array[Vector3] = [
+		Vector3(-5.2, 0.0, -11.5), Vector3(5.2, 0.0, -11.5),
+		Vector3(-11.5, 0.0, -5.2), Vector3(11.5, 0.0, 5.2),
+		Vector3(-11.5, 0.0, 5.2), Vector3(11.5, 0.0, -5.2),
+		Vector3(-5.2, 0.0, 11.5), Vector3(5.2, 0.0, 11.5)
+	]
+	for bloom_position: Vector3 in bloom_positions:
+		var bloom: Node3D = BloomkeeperFlower.new() as Node3D
+		bloom.name = "ForestRestorationBloom"
+		_tree_root.add_child(bloom)
+		bloom.position = bloom_position
+		_restoration_blooms.append(bloom)
+	print("The forest canopy warms as the last Prowler blooms; new flowers emerge across the sanctuary.")
