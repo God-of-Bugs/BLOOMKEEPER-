@@ -3,7 +3,8 @@
 
 # Godot export artifacts
 /export.cfg
-/export_presets.cfg
+build/
+*.translation
 
 # Operating system and editor temporary files
 .DS_Store
